@@ -4,16 +4,19 @@ import { Objects } from "./objects"
 import { Connection } from "./connection"
 import { ClientSetup, ControlMessageType, ServerSetup } from "./control"
 import { ImmutableBytesBuffer, ReadableWritableStreamBuffer } from "./buffer"
+import { defaultTransportSessionFactory } from "./session"
+import type { TransportCertificateHash, TransportSessionFactory, TransportSessionOptions } from "./session"
 
 export interface ClientConfig {
 	url: string
 	// If set, the server fingerprint will be fetched from this URL.
 	// This is required to use self-signed certificates with Chrome (May 2023)
 	fingerprint?: string
+	sessionFactory?: TransportSessionFactory
 }
 
 export class Client {
-	#fingerprint: Promise<WebTransportHash | undefined>
+	#fingerprint: Promise<TransportCertificateHash | undefined>
 
 	readonly config: ClientConfig
 
@@ -27,15 +30,16 @@ export class Client {
 	}
 
 	async connect(): Promise<Connection> {
-		const options: WebTransportOptions = {}
+		const options: TransportSessionOptions = {}
 
 		const fingerprint = await this.#fingerprint
 		if (fingerprint) options.serverCertificateHashes = [fingerprint]
 
-		const quic = new WebTransport(this.config.url, options)
-		await quic.ready
+		const sessionFactory = this.config.sessionFactory ?? defaultTransportSessionFactory
+		const session = sessionFactory(this.config.url, options)
+		await session.ready
 
-		const stream = await quic.createBidirectionalStream({ sendOrder: Number.MAX_SAFE_INTEGER })
+		const stream = await session.createBidirectionalStream({ sendOrder: Number.MAX_SAFE_INTEGER })
 
 		const buffer = new ReadableWritableStreamBuffer(stream.readable, stream.writable)
 
@@ -55,12 +59,12 @@ export class Client {
 		}
 
 		const control = new Stream.ControlStream(buffer)
-		const objects = new Objects(quic)
+		const objects = new Objects(session)
 
-		return new Connection(quic, control, objects)
+		return new Connection(session, control, objects)
 	}
 
-	async #fetchFingerprint(url?: string): Promise<WebTransportHash | undefined> {
+	async #fetchFingerprint(url?: string): Promise<TransportCertificateHash | undefined> {
 		if (!url) return
 
 		// TODO remove this fingerprint when Chrome WebTransport accepts the system CA

@@ -179,7 +179,9 @@ demo/
 
 2. **Test Locally**:
    - Publisher: http://localhost:8080/
+   - Publisher over QMux: http://localhost:8080/?transport=qmux
    - Player: Use generated links
+   - Player over QMux: add `transport=qmux` to the player URL
 
 3. **Prepare for Production**:
    - Run `npm run deploy:prepare` to switch to Cloudflare config

@@ -7,15 +7,20 @@ import { asError } from "../common/error"
 import Backend from "./backend"
 
 import { Client } from "../transport/client"
+import type { TransportSessionFactory } from "../transport/session"
 import { SubgroupReader } from "../transport/subgroup"
 
 export type Range = Message.Range
 export type Timeline = Message.Timeline
+export { QmuxSession, createQmuxTransportSessionFactory, qmuxTransportSessionFactory } from "../transport/qmux"
+export type { QmuxSessionOptions } from "../transport/qmux"
+export type { TransportSessionFactory } from "../transport/session"
 
 export interface PlayerConfig {
 	url: string
 	namespace: string
 	fingerprint?: string // URL to fetch TLS certificate fingerprint
+	sessionFactory?: TransportSessionFactory
 	canvas: HTMLCanvasElement
 }
 
@@ -73,7 +78,11 @@ export default class Player extends EventTarget {
 	}
 
 	static async create(config: PlayerConfig, tracknum: number): Promise<Player> {
-		const client = new Client({ url: config.url, fingerprint: config.fingerprint })
+		const client = new Client({
+			url: config.url,
+			fingerprint: config.fingerprint,
+			sessionFactory: config.sessionFactory,
+		})
 		const connection = await client.connect()
 
 		const catalog = await Catalog.fetch(connection, [config.namespace])

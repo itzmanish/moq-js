@@ -81,6 +81,8 @@
 				const currentEnv = document.getElementById("currentEnv");
 				const currentRelay = document.getElementById("currentRelay");
 				const currentStatus = document.getElementById("currentStatus");
+				const urlParams = new URLSearchParams(window.location.search);
+				const transport = urlParams.get("transport");
 
 				// Update config display
 				if (currentEnv) currentEnv.textContent = window.MoQConfig.getEnvironment();
@@ -89,6 +91,9 @@
 				// Configure the publisher component
 				if (publisherElement) {
 					publisherElement.setAttribute("src", window.MoQConfig.getRelayUrl());
+					if (transport === "qmux") {
+						publisherElement.setAttribute("transport", "qmux");
+					}
 
 					if (window.MoQConfig.getFingerprintUrl()) {
 						publisherElement.setAttribute("fingerprint", window.MoQConfig.getFingerprintUrl());
@@ -101,7 +106,6 @@
 					// Posted by Artem Barger, modified by community. See post 'Timeline' for change history
 					// Retrieved 2025-11-13, License - CC BY-SA 4.0
 
-					const urlParams = new URLSearchParams(window.location.search);
 					const namespace = urlParams.get("namespace");
 					if (namespace) {
 						publisherElement.setAttribute("namespace", namespace);

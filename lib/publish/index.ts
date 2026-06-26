@@ -1,6 +1,11 @@
 import { Client } from "../transport/client"
 import { Broadcast, BroadcastConfig } from "../contribute"
 import { Connection } from "../transport/connection"
+import type { TransportSessionFactory } from "../transport/session"
+
+export { QmuxSession, createQmuxTransportSessionFactory, qmuxTransportSessionFactory } from "../transport/qmux"
+export type { QmuxSessionOptions } from "../transport/qmux"
+export type { TransportSessionFactory } from "../transport/session"
 
 export interface PublisherOptions {
 	url: string
@@ -9,6 +14,7 @@ export interface PublisherOptions {
 	video?: VideoEncoderConfig
 	audio?: AudioEncoderConfig
 	fingerprintUrl?: string
+	sessionFactory?: TransportSessionFactory
 }
 
 export class PublisherApi {
@@ -22,6 +28,7 @@ export class PublisherApi {
 		this.client = new Client({
 			url: opts.url,
 			fingerprint: opts.fingerprintUrl,
+			sessionFactory: opts.sessionFactory,
 		})
 	}
 

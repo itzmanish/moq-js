@@ -5,10 +5,11 @@ import { ControlStream } from "./stream"
 
 import { Publisher } from "./publisher"
 import { Subscriber } from "./subscriber"
+import type { TransportSession } from "./session"
 
 export class Connection {
-	// The established WebTransport session.
-	#quic: WebTransport
+	// The established transport session.
+	#session: TransportSession
 
 	// Use to receive/send control messages.
 	#controlStream: ControlStream
@@ -25,8 +26,8 @@ export class Connection {
 	// Async work running in the background
 	#running: Promise<void>
 
-	constructor(quic: WebTransport, stream: ControlStream, objects: Objects) {
-		this.#quic = quic
+	constructor(session: TransportSession, stream: ControlStream, objects: Objects) {
+		this.#session = session
 		this.#controlStream = stream
 		this.#objects = objects
 
@@ -37,7 +38,7 @@ export class Connection {
 	}
 
 	close(code = 0, reason = "") {
-		this.#quic.close({ closeCode: code, reason })
+		this.#session.close({ closeCode: code, reason })
 	}
 
 	async #run(): Promise<void> {

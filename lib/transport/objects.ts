@@ -2,6 +2,7 @@ import { SubgroupHeader, SubgroupObject, SubgroupReader, SubgroupType, SubgroupW
 import { KeyValuePairs } from "./base_data"
 import { debug } from "./utils"
 import { ImmutableBytesBuffer, MutableBytesBuffer, ReadableStreamBuffer, Reader, WritableStreamBuffer, Writer } from "./buffer"
+import type { TransportSession } from "./session"
 
 export enum ObjectForwardingPreference {
 	Datagram = "Datagram",
@@ -218,10 +219,10 @@ export namespace ObjectDatagram {
 }
 
 export class Objects {
-	private quic: WebTransport
+	private session: TransportSession
 
-	constructor(quic: WebTransport) {
-		this.quic = quic
+	constructor(session: TransportSession) {
+		this.session = session
 	}
 
 	async send(h: ObjectDatagram | SubgroupHeader): Promise<TrackWriter | SubgroupWriter> {
@@ -229,12 +230,15 @@ export class Objects {
 
 		if (is_datagram) {
 			// Datagram mode
-			const stream = this.quic.datagrams.writable
+			const datagrams = this.session.datagrams
+			if (!datagrams) throw new Error("transport does not support datagrams")
+
+			const stream = datagrams.writable
 			const w = new WritableStreamBuffer(stream)
 			return new TrackWriter(w)
 		} else {
 			// Subgroup stream mode
-			const stream = await this.quic.createUnidirectionalStream()
+			const stream = await this.session.createUnidirectionalStream()
 			const w = new WritableStreamBuffer(stream)
 
 			// Write subgroup header
@@ -247,7 +251,7 @@ export class Objects {
 
 	async recv(): Promise<TrackReader | SubgroupReader | undefined> {
 		console.log("Objects.recv waiting for streams")
-		const streams = this.quic.incomingUnidirectionalStreams.getReader()
+		const streams = this.session.incomingUnidirectionalStreams.getReader()
 
 		console.log("Objects.recv got streams", streams)
 		const { value, done } = await streams.read()
@@ -372,4 +376,3 @@ export class TrackReader {
 		await this.stream.close()
 	}
 }
-

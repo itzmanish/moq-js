@@ -1,4 +1,5 @@
 import Player from "../playback/index"
+import { qmuxTransportSessionFactory } from "../transport/qmux"
 import { FULLSCREEN_BUTTON, PICTURE_IN_PICTURE_BUTTON, VOLUME_CONTROL } from "./control-buttons"
 import { ENTER_PIP_SVG, EXIT_PIP_SVG, PAUSE_SVG, PLAY_SVG } from "./icons"
 
@@ -236,6 +237,7 @@ export class VideoMoq extends HTMLElement {
 		const urlParams = new URLSearchParams(url.search)
 		const namespace = urlParams.get("namespace") || this.getAttribute("namespace")
 		const fingerprint = urlParams.get("fingerprint") || this.getAttribute("fingerprint")
+		const transport = urlParams.get("transport") || this.getAttribute("transport")
 
 		// TODO: Unsure if fingerprint should be optional
 		if (namespace === null) return
@@ -243,7 +245,13 @@ export class VideoMoq extends HTMLElement {
 		const trackNumStr = urlParams.get("trackNum") || this.trackNum
 		const trackNum: number = this.auxParseInt(trackNumStr, 0)
 		Player.create(
-			{ url: url.origin, fingerprint: fingerprint ?? undefined, canvas: this.#canvas, namespace },
+			{
+				url: url.origin,
+				fingerprint: fingerprint ?? undefined,
+				canvas: this.#canvas,
+				namespace,
+				sessionFactory: transport === "qmux" ? qmuxTransportSessionFactory : undefined,
+			},
 			trackNum,
 		)
 

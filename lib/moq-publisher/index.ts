@@ -1,5 +1,6 @@
 import STYLE_SHEET from "./publisher-moq.css"
 import { PublisherApi, PublisherOptions } from "../publish"
+import { qmuxTransportSessionFactory } from "../transport/qmux"
 
 export class PublisherMoq extends HTMLElement {
 	private shadow: ShadowRoot
@@ -154,6 +155,7 @@ export class PublisherMoq extends HTMLElement {
 				media: this.mediaStream,
 				video: videoConfig,
 				audio: audioConfig,
+				sessionFactory: this.getAttribute("transport") === "qmux" ? qmuxTransportSessionFactory : undefined,
 			}
 
 			console.log("Publisher Options", opts)
@@ -169,7 +171,11 @@ export class PublisherMoq extends HTMLElement {
 
 				const playbackBaseUrl = this.getAttribute("playbackbaseurl")
 				if (playbackBaseUrl) {
-					this.playbackUrlTextarea.value = `${playbackBaseUrl}${this.namespace}`
+					const separator = playbackBaseUrl.includes("?") ? "&" : "?"
+					const transport = this.getAttribute("transport")
+					this.playbackUrlTextarea.value = transport
+						? `${playbackBaseUrl}${this.namespace}${separator}transport=${encodeURIComponent(transport)}`
+						: `${playbackBaseUrl}${this.namespace}`
 				} else {
 					this.playbackUrlTextarea.value = this.namespace
 				}

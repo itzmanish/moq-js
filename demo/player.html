@@ -232,8 +232,16 @@
 						this.videoPlayer.setAttribute("autoplay", "");
 						this.videoPlayer.setAttribute("muted", "");
 
+						const pageUrlParams = new URLSearchParams(window.location.search);
+						const transport = pageUrlParams.get("transport");
+						if (transport === "qmux") {
+							this.videoPlayer.setAttribute("transport", "qmux");
+						}
+
 						// Configure the video player element with full URL
-						const srcUrl = `${window.MoQConfig.getRelayUrl()}?namespace=${this.namespace}`;
+						const srcUrl = `${window.MoQConfig.getRelayUrl()}?namespace=${this.namespace}${
+							transport === "qmux" ? "&transport=qmux" : ""
+						}`;
 						this.videoPlayer.setAttribute("src", srcUrl);
 						console.log("MoQTPlayerDemo initializePlayer srcUrl", srcUrl);
 
